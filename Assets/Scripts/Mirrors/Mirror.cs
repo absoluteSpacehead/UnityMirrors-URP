@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+using UnityEngine.Rendering.Universal;
+using UnityEngine.Rendering;
 
 public class Mirror : MonoBehaviour
 {
@@ -43,7 +45,7 @@ public class Mirror : MonoBehaviour
         }
     }
 
-    public void Render()
+    public void Render(ScriptableRenderContext ctx)
     {
         if(!IsVisibleFrom(mirror, playerCam))
         {
@@ -61,7 +63,18 @@ public class Mirror : MonoBehaviour
 
         ReflectCamera();
         SetNearClipPlane();
-        mirrorCam.Render();
+
+        /* RenderSingleCamera is now deprecated, but it's replacement is even worse. Disable the warning about it, if the problems (see below) get fixed -
+         * - I'll replace it here too, but for now it stays. */
+#pragma warning disable CS0618
+        UniversalRenderPipeline.RenderSingleCamera(ctx, mirrorCam);
+#pragma warning restore CS0618
+
+        /* This is supposedly the replacement solution but it throws errors about recursive rendering not being supported in SRP.
+         * https://forum.unity.com/threads/rendersinglecamera-is-obsolete-but-the-suggested-solution-has-error.1354835/ */
+
+        // UniversalRenderPipeline.SubmitRenderRequest(mirrorCam, new UniversalRenderPipeline.SingleCameraRequest());
+
         mirror.enabled = true;
     }
 

@@ -31,7 +31,7 @@ public class MainCamMirrorHelper : MonoBehaviour
 
         for (int i = 0; i < mirrors.Length; i++)
         {
-            mirrors[i].Render();
+            mirrors[i].Render(ctx);
         }
     }
 }
