@@ -64,7 +64,7 @@ public class Mirror : MonoBehaviour
         ReflectCamera();
         SetNearClipPlane();
 
-        /* RenderSingleCamera is now deprecated, but it's replacement is even worse. Disable the warning about it, if the problems (see below) get fixed -
+        /* RenderSingleCamera is now deprecated, but its replacement is even worse. Disable the warning about it, if the problems (see below) get fixed -
          * - I'll replace it here too, but for now it stays. */
 #pragma warning disable CS0618
         UniversalRenderPipeline.RenderSingleCamera(ctx, mirrorCam);
@@ -133,11 +133,6 @@ public class Mirror : MonoBehaviour
             mirrorCam.projectionMatrix = playerCam.projectionMatrix;
         }
     }
-
-	private void OnDrawGizmos()
-	{	
-		Gizmos.DrawWireMesh(Resources.GetBuiltinResource<Mesh>("Quad.fbx"), transform.position, transform.rotation, transform.lossyScale);
-	}
 
     private void OnDrawGizmosSelected()
     {
