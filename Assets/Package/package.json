@@ -1,0 +1,12 @@
+{
+    "name": "com.absolutespacehead.mirrorsurp",
+    "displayName": "UnityMirrors-URP",
+    "author": {
+        "name": "absoluteSpacehead",
+        "url": "https://github.com/absoluteSpacehead"
+    },
+    "version": "1.0.0",
+    "unity": "6000.6",
+    "description": "URP fork of Parzival-3141's Perspective correct mirrors for Unity",
+    "changelogUrl": "https://github.com/absoluteSpacehead/UnityMirrors-URP/blob/main/CHANGELOG.md"
+}

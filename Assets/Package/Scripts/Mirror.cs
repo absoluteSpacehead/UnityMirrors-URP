@@ -1,12 +1,11 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEditor;
+﻿using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.Rendering;
 
 public class Mirror : MonoBehaviour
 {
+    private static readonly int mainTex = Shader.PropertyToID("_MainTex");
+    private static readonly int displayMask = Shader.PropertyToID("displayMask");
     private MeshRenderer mirror;
     private Camera playerCam;
     private Transform playerCamTrans;
@@ -16,64 +15,70 @@ public class Mirror : MonoBehaviour
     public float nearClipOffset = 0.05f;
     public float nearClipLimit  = 0.2f;
 
+    public int widthOverride;
+    public int heightOverride;
+    private int targetWidth => widthOverride > 0 ? widthOverride : Screen.width;
+    private int targetHeight => heightOverride > 0 ? heightOverride : Screen.height;
 
     private void Awake()
     {
         mirror = GetComponent<MeshRenderer>();
         mirror.enabled = false;
         
-        playerCam = Camera.main;
-        playerCamTrans = playerCam.transform;
         mirrorCam = GetComponentInChildren<Camera>();
-        mirrorCam.fieldOfView = playerCam.fieldOfView;
+        SetCamera();
 
         mirror.material.shader = Shader.Find("Custom/Mirror");
-        mirror.material.SetInt("displayMask", 1);
+        mirror.material.SetInt(displayMask, 1);
+    }
+
+    public void SetCamera(Camera camera = null)
+    {
+        if (!camera)
+            camera = Camera.main;
+
+        playerCam = camera;
+        playerCamTrans = camera.transform;
+        mirrorCam.fieldOfView = camera.fieldOfView;
     }
 
     private void CreateViewTexture()
     {
-        if(viewTexture == null || viewTexture.width != Screen.width || viewTexture.height != Screen.height)
+        if(viewTexture == null || viewTexture.width != targetWidth || viewTexture.height != targetHeight)
         {
             if (viewTexture != null)
                 viewTexture.Release();
 
-            viewTexture = new RenderTexture(Screen.width, Screen.height, 0);
+            viewTexture = new RenderTexture(targetWidth, targetHeight, 24);
             mirrorCam.targetTexture = viewTexture;
 
-            mirror.material.SetTexture("_MainTex", viewTexture);
+            mirror.material.SetTexture(mainTex, viewTexture);
         }
     }
 
     public void Render(ScriptableRenderContext ctx)
     {
-        if(!IsVisibleFrom(mirror, playerCam))
+        mirrorCam.enabled = IsVisibleFrom(mirror, playerCam);
+        
+        if(!mirrorCam.enabled)
         {
             var testTex = new Texture2D(1, 1);
             testTex.SetPixel(0, 0, Color.red);
             testTex.Apply();
-            mirror.material.SetTexture("_MainTex", testTex); // Debug
+            mirror.material.SetTexture(mainTex, testTex); // Debug
 
             return;
         }
 
-        mirror.material.SetTexture("_MainTex", viewTexture);
+        mirror.material.SetTexture(mainTex, viewTexture);
         mirror.enabled = false;
         CreateViewTexture();
 
         ReflectCamera();
         SetNearClipPlane();
-
-        /* RenderSingleCamera is now deprecated, but its replacement is even worse. Disable the warning about it, if the problems (see below) get fixed -
-         * - I'll replace it here too, but for now it stays. */
-#pragma warning disable CS0618
-        UniversalRenderPipeline.RenderSingleCamera(ctx, mirrorCam);
-#pragma warning restore CS0618
-
-        /* This is supposedly the replacement solution but it throws errors about recursive rendering not being supported in SRP.
-         * https://forum.unity.com/threads/rendersinglecamera-is-obsolete-but-the-suggested-solution-has-error.1354835/ */
-
-        // UniversalRenderPipeline.SubmitRenderRequest(mirrorCam, new UniversalRenderPipeline.SingleCameraRequest());
+        
+        // Rejoice! This method has been fixed as of 6000.0.12f1: https://discussions.unity.com/t/rendersinglecamera-is-obsolete-but-the-suggested-solution-has-error/898627/27
+        UniversalRenderPipeline.SubmitRenderRequest(mirrorCam, new UniversalRenderPipeline.SingleCameraRequest() { destination = viewTexture });
 
         mirror.enabled = true;
     }

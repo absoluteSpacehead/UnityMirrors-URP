@@ -12,7 +12,7 @@ public class MainCamMirrorHelper : MonoBehaviour
 
     void Awake()
     {
-        mirrors = FindObjectsOfType<Mirror>();
+        mirrors = FindObjectsByType<Mirror>();
 
         // Replacement for OnPreCull() which is BIRP only
         mCamera = GetComponent<Camera>();
@@ -29,9 +29,9 @@ public class MainCamMirrorHelper : MonoBehaviour
         if (cam != mCamera)
             return;
 
-        for (int i = 0; i < mirrors.Length; i++)
+        foreach (Mirror mirror in mirrors)
         {
-            mirrors[i].Render(ctx);
+            mirror.Render(ctx);
         }
     }
 }
